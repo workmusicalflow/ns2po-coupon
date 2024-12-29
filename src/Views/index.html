@@ -17,7 +17,12 @@
         </p>
       </header>
 
-      <main class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+      <main class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 relative">
+        <!-- Message de validation -->
+        <div
+          id="validationMessage"
+          class="hidden mb-4 p-4 rounded-md text-sm"
+        ></div>
         <form id="couponForm" class="space-y-6">
           <div>
             <label
@@ -102,12 +107,91 @@
     </div>
 
     <script>
-      document
-        .getElementById("couponForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          // API call logic will be implemented here
-        });
+      const form = document.getElementById("couponForm");
+      const validationMessage = document.getElementById("validationMessage");
+      const activationFields = document.getElementById("activationFields");
+      const couponInput = document.getElementById("couponId");
+
+      // Fonction pour afficher les messages
+      function showMessage(message, isError = false) {
+        validationMessage.textContent = message;
+        validationMessage.classList.remove(
+          "hidden",
+          "bg-green-100",
+          "text-green-700",
+          "bg-red-100",
+          "text-red-700"
+        );
+        validationMessage.classList.add(
+          isError ? "bg-red-100" : "bg-green-100",
+          isError ? "text-red-700" : "text-green-700"
+        );
+      }
+
+      // Fonction pour valider le format du code
+      function validateCouponFormat(code) {
+        return /^[A-Za-z0-9]{5}$/.test(code);
+      }
+
+      // Gestionnaire de soumission du formulaire
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const couponCode = couponInput.value.trim();
+
+        // Validation côté client
+        if (!validateCouponFormat(couponCode)) {
+          showMessage(
+            "Le code coupon doit contenir exactement 5 caractères alphanumériques",
+            true
+          );
+          return;
+        }
+
+        try {
+          // Appel à l'API de validation
+          const response = await fetch("/src/validate-coupon", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ code: couponCode }),
+          });
+
+          const data = await response.json();
+
+          if (data.valid) {
+            // Afficher le message de succès
+            showMessage(`Coupon valide pour : ${data.motif}`);
+            // Afficher les champs d'activation
+            activationFields.classList.remove("hidden");
+            // Changer le texte du bouton
+            form.querySelector('button[type="submit"]').textContent =
+              "Activer le Coupon";
+          } else {
+            // Afficher l'erreur
+            showMessage(data.error, true);
+            // Cacher les champs d'activation
+            activationFields.classList.add("hidden");
+            // Réinitialiser le texte du bouton
+            form.querySelector('button[type="submit"]').textContent =
+              "Valider le Coupon";
+          }
+        } catch (error) {
+          showMessage(
+            "Une erreur est survenue lors de la validation du coupon",
+            true
+          );
+          console.error("Erreur:", error);
+        }
+      });
+
+      // Réinitialiser le message lors de la modification du code
+      couponInput.addEventListener("input", () => {
+        validationMessage.classList.add("hidden");
+        activationFields.classList.add("hidden");
+        form.querySelector('button[type="submit"]').textContent =
+          "Valider le Coupon";
+      });
     </script>
   </body>
 </html>

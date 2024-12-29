@@ -28,7 +28,7 @@
    - [x] Implémenter la validation des codes coupon
    - [x] Implémenter la connexion Airtable
    - [x] Développer l'endpoint de validation
-   - [ ] Intégrer la validation frontend
+   - [x] Intégrer la validation frontend
 
 3. **Error Handling**
    - [ ] Middleware de gestion d'erreurs
