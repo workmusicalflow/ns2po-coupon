@@ -1,8 +1,18 @@
 <?php
 
 use Dotenv\Dotenv;
+use Middleware\ErrorHandler;
+use Utils\Logger;
 
 require __DIR__ . '/../vendor/autoload.php';
+
+// Initialize logger and error handler
+$logger = new Logger();
+$errorHandler = new ErrorHandler($logger);
+
+// Set error and exception handlers
+set_error_handler([$errorHandler, 'handleError']);
+set_exception_handler([$errorHandler, 'handleException']);
 
 // Load environment variables
 try {

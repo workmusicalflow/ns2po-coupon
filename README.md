@@ -39,6 +39,22 @@ Formulaire de saisie comprenant :
 - PHP
 - Base de données : Airtable
 
+### Gestion des Erreurs
+
+- Middleware de gestion d'erreurs centralisé
+- Système de logs journaliers
+- Retours utilisateur adaptés (développement/production)
+- Niveaux de logs : ERROR, INFO, WARNING, DEBUG
+
+Les logs sont stockés dans le dossier `/logs` avec un fichier par jour au format `YYYY-MM-DD.log`.
+
+#### Niveaux de Logs
+
+- ERROR : Erreurs critiques nécessitant une attention immédiate
+- WARNING : Avertissements importants mais non critiques
+- INFO : Informations générales sur le fonctionnement
+- DEBUG : Détails techniques (uniquement en développement)
+
 ## Sécurité
 
 - Validation des données côté serveur

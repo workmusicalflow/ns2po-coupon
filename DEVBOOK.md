@@ -30,10 +30,10 @@
    - [x] Développer l'endpoint de validation
    - [x] Intégrer la validation frontend
 
-3. **Error Handling**
-   - [ ] Middleware de gestion d'erreurs
-   - [ ] Retours utilisateur
-   - [ ] Système de logs
+3. **Error Handling** ✓
+   - [x] Middleware de gestion d'erreurs
+   - [x] Retours utilisateur
+   - [x] Système de logs
 
 ### Phase 2: Activation Form
 
@@ -85,6 +85,38 @@ Frontend (HTML/CSS/JS) ⟷ Controller ⟷ Model (Airtable API)
 
 - PHP (No framework)
 - Airtable API
+- Error Handling Middleware
+- Logging System
+
+### Error Handling & Logging
+
+#### Error Handler Middleware
+
+- Centralise la gestion des erreurs
+- Adapte les messages selon l'environnement (dev/prod)
+- Gère les exceptions PHP et les erreurs personnalisées
+- Journalise automatiquement les erreurs
+
+#### Système de Logs
+
+Niveaux de logs disponibles :
+
+- **ERROR** : Erreurs critiques nécessitant une intervention
+- **WARNING** : Problèmes non-critiques à surveiller
+- **INFO** : Événements normaux du système
+- **DEBUG** : Informations détaillées (dev uniquement)
+
+Format des logs :
+
+```
+[YYYY-MM-DD HH:mm:ss] LEVEL: Message {Context JSON}
+```
+
+Stockage :
+
+- Fichiers journaliers dans `/logs/YYYY-MM-DD.log`
+- Rotation automatique des fichiers
+- Exclus du contrôle de version
 
 ## Development Principles
 
@@ -196,6 +228,11 @@ La validation des coupons se fait en plusieurs étapes:
 ## Changelog
 
 ### [Unreleased]
+
+- Implemented error handling middleware
+- Added comprehensive logging system
+- Enhanced error reporting and user feedback
+- Added environment-aware error messages
 
 - Added implementation plan
 - Initial project setup
