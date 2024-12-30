@@ -109,10 +109,39 @@
             </div>
           </div>
 
-          <div class="flex justify-center">
+          <div class="flex flex-col items-center space-y-4">
+            <!-- Boutons de vérification -->
+            <div class="flex justify-center space-x-4 w-full">
+              <button
+                type="button"
+                id="verifyButton"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Vérifier la validité
+              </button>
+              <button
+                type="button"
+                id="resetButton"
+                class="hidden px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+              >
+                Nouvelle vérification
+              </button>
+            </div>
+            
+            <!-- Bouton d'utilisation -->
+            <button
+              type="button"
+              id="useButton"
+              class="hidden w-full px-4 py-3 bg-green-600 text-white text-lg font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              Utiliser ce coupon
+            </button>
+
+            <!-- Bouton de validation du formulaire -->
             <button
               type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              id="submitButton"
+              class="hidden w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
               Valider le Coupon
             </button>
@@ -186,6 +215,104 @@
 
         return true;
       }
+
+      // Fonction pour vérifier la validité du coupon
+      async function verifyCoupon(couponCode) {
+        const verifyButton = document.getElementById("verifyButton");
+        const useButton = document.getElementById("useButton");
+        const resetButton = document.getElementById("resetButton");
+        
+        try {
+          // Désactiver le bouton pendant la vérification
+          verifyButton.disabled = true;
+          verifyButton.textContent = "Vérification...";
+
+          const response = await fetch("/src/validate-coupon", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ code: couponCode }),
+          });
+
+          const data = await response.json();
+
+          if (data.valid) {
+            // Afficher le message de succès
+            showMessage(`✓ Coupon valide et disponible pour : ${data.motif}`, false);
+            
+            // Désactiver le champ de saisie et le bouton de vérification
+            couponInput.disabled = true;
+            couponInput.classList.add("bg-gray-100");
+            verifyButton.disabled = true;
+            verifyButton.classList.add("opacity-50", "cursor-not-allowed", "bg-gray-400");
+            
+            // Afficher le bouton d'utilisation avec animation
+            useButton.classList.remove("hidden");
+            useButton.classList.add("animate-fade-in");
+            
+            // Afficher le bouton de réinitialisation
+            resetButton.classList.remove("hidden");
+            
+            // Animation d'apparition du bouton d'utilisation
+            useButton.style.opacity = "0";
+            useButton.style.transform = "translateY(20px)";
+            setTimeout(() => {
+              useButton.style.transition = "all 0.5s ease-out";
+              useButton.style.opacity = "1";
+              useButton.style.transform = "translateY(0)";
+            }, 100);
+          } else {
+            showMessage(`✗ ${data.error}`, true);
+          }
+        } catch (error) {
+          showMessage("Une erreur est survenue lors de la vérification du coupon", true);
+          console.error("Erreur:", error);
+        } finally {
+          verifyButton.disabled = false;
+          verifyButton.textContent = "Vérifier la validité";
+        }
+      }
+
+      // Gestionnaire du bouton de vérification
+      document.getElementById("verifyButton").addEventListener("click", () => {
+        const couponCode = couponInput.value.trim();
+        if (!validateCouponFormat(couponCode)) {
+          showMessage(
+            "Le code coupon doit contenir exactement 5 caractères alphanumériques",
+            true
+          );
+          return;
+        }
+        verifyCoupon(couponCode);
+      });
+
+      // Gestionnaire du bouton d'utilisation
+      document.getElementById("useButton").addEventListener("click", () => {
+        activationFields.classList.remove("hidden");
+        document.getElementById("useButton").classList.add("hidden");
+        document.getElementById("submitButton").classList.remove("hidden");
+      });
+
+      // Gestionnaire du bouton de réinitialisation
+      document.getElementById("resetButton").addEventListener("click", () => {
+        form.reset();
+        validationMessage.classList.add("hidden");
+        activationFields.classList.add("hidden");
+        document.getElementById("successView").classList.add("hidden");
+        document.getElementById("formView").classList.remove("hidden");
+        document.getElementById("useButton").classList.add("hidden");
+        document.getElementById("submitButton").classList.add("hidden");
+        document.getElementById("resetButton").classList.add("hidden");
+        
+        // Réactiver le champ de saisie et le bouton de vérification
+        couponInput.disabled = false;
+        const verifyButton = document.getElementById("verifyButton");
+        verifyButton.disabled = false;
+        verifyButton.classList.remove("opacity-50", "cursor-not-allowed");
+        
+        couponInput.focus();
+      });
 
       // Gestionnaire de soumission du formulaire
       form.addEventListener("submit", async (e) => {
@@ -278,12 +405,11 @@
             const data = await response.json();
 
             if (data.valid) {
-              showMessage(`Coupon valide pour : ${data.motif}`);
+              showMessage(`✓ Coupon valide pour : ${data.motif}`);
               activationFields.classList.remove("hidden");
-              // Delay changing button text slightly
-              setTimeout(() => {
-                submitButton.textContent = "Activer le Coupon";
-              }, 50);
+              // Afficher le bouton de validation et changer son texte
+              submitButton.classList.remove("hidden");
+              submitButton.textContent = "Activer le Coupon";
               // Store motif for success message
               const motifInput = document.createElement("input");
               motifInput.type = "hidden";
@@ -307,13 +433,14 @@
         }
       });
 
-      // Réinitialiser le message lors de la modification du code
+      // Réinitialiser l'interface lors de la modification du code
       couponInput.addEventListener("input", () => {
         validationMessage.classList.add("hidden");
         activationFields.classList.add("hidden");
         document.getElementById("successView").classList.add("hidden");
         document.getElementById("formView").classList.remove("hidden");
-        form.querySelector('button[type="submit"]').textContent =
-          "Valider le Coupon";
+        document.getElementById("useButton").classList.add("hidden");
+        document.getElementById("submitButton").classList.add("hidden");
+        document.getElementById("resetButton").classList.add("hidden");
       });
     </script>
