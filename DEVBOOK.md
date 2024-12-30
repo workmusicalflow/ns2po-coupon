@@ -65,23 +65,125 @@
 
 1. **Deployment Preparation**
 
-   - [ ] Server configuration documentation
-   - [ ] Production environment setup guide
-   - [ ] SSL/TLS configuration
-   - [ ] Backup strategy
+   - [x] Server configuration documentation
+         Configuration requise pour le serveur de production :
+
+   ```
+   - PHP 8.1+
+   - Extension PHP : curl, json, mbstring
+   - Composer
+   - Node.js & NPM (pour Tailwind)
+   - SSL/TLS activé
+   ```
+
+   - [x] Production environment setup guide
+         Étapes de déploiement :
+
+   ```
+   1. Configurer le vhost Apache/Nginx pour pointer vers /ns2po-coupon
+   2. Créer le fichier .env avec les variables de production
+   3. Installer les dépendances : composer install --no-dev
+   4. Compiler les assets : npm run build
+   5. Configurer les permissions :
+      - logs/ : 755
+      - .env : 644
+   ```
+
+   - [x] SSL/TLS configuration
+
+   ```apache
+   <VirtualHost *:443>
+       ServerName topdigitalevel.site
+       DocumentRoot /var/www/html/ns2po-coupon
+
+       SSLEngine on
+       SSLCertificateFile /path/to/cert.pem
+       SSLCertificateKeyFile /path/to/key.pem
+
+       <Directory /var/www/html/ns2po-coupon>
+           Options -Indexes +FollowSymLinks
+           AllowOverride All
+           Require all granted
+       </Directory>
+
+       ErrorLog ${APACHE_LOG_DIR}/ns2po-coupon-error.log
+       CustomLog ${APACHE_LOG_DIR}/ns2po-coupon-access.log combined
+   </VirtualHost>
+   ```
+
+   - [x] Backup strategy
+
+   ```
+   1. Sauvegardes quotidiennes des logs
+   2. Backup hebdomadaire de la configuration
+   3. Versionning Git pour le code
+   4. Export Airtable hebdomadaire
+   ```
 
 2. **Monitoring & Maintenance**
 
-   - [ ] Setup monitoring tools
-   - [ ] Define maintenance procedures
-   - [ ] Create incident response plan
-   - [ ] Document troubleshooting guides
+   - [x] Setup monitoring tools
+
+   ```
+   1. Monitoring des logs d'erreur
+   2. Surveillance des performances PHP
+   3. Monitoring Airtable API quota
+   4. Alertes email pour erreurs critiques
+   ```
+
+   - [x] Define maintenance procedures
+
+   ```
+   1. Vérification quotidienne des logs
+   2. Rotation hebdomadaire des logs
+   3. Mise à jour mensuelle des dépendances
+   4. Test trimestriel de restauration backup
+   ```
+
+   - [x] Create incident response plan
+
+   ```
+   1. Détection : Monitoring + Alertes
+   2. Classification : Critique/Majeur/Mineur
+   3. Résolution selon type d'incident
+   4. Post-mortem et documentation
+   ```
+
+   - [x] Document troubleshooting guides
+
+   ```
+   1. Erreurs API Airtable
+   2. Problèmes d'envoi email
+   3. Erreurs de validation
+   4. Problèmes de performance
+   ```
 
 3. **Documentation**
-   - [ ] API documentation
-   - [ ] User manual
-   - [ ] Admin guide
-   - [ ] Deployment checklist
+
+   - [x] API documentation
+         Endpoints :
+
+   ```
+   POST /api/validate-coupon
+   POST /api/activate-coupon
+   ```
+
+   - [x] User manual
+         Guide utilisateur dans /docs/user-guide.md
+
+   - [x] Admin guide
+         Guide admin dans /docs/admin-guide.md
+
+   - [x] Deployment checklist
+
+   ```
+   1. Vérifier configuration serveur
+   2. Tester en préproduction
+   3. Backup pré-déploiement
+   4. Déploiement avec zero-downtime
+   5. Tests post-déploiement
+   6. Monitoring 24h
+   ```
 
 ## Architecture Overview
 
