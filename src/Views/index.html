@@ -18,11 +18,26 @@
       </header>
 
       <main class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 relative">
-        <!-- Message de validation -->
-        <div
-          id="validationMessage"
-          class="hidden mb-4 p-4 rounded-md text-sm"
-        ></div>
+        <!-- Success View -->
+        <div id="successView" class="hidden text-center py-8">
+          <div class="mb-6">
+            <svg class="mx-auto h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Activation Réussie !</h2>
+          <p id="successPersonalMessage" class="text-gray-600 mb-4"></p>
+          <p id="successMotifMessage" class="text-gray-600 mb-6 font-semibold"></p>
+          <p class="text-sm text-gray-500">Un email de confirmation vous sera envoyé prochainement avec les détails de votre coupon.</p>
+        </div>
+
+        <!-- Form View -->
+        <div id="formView">
+          <!-- Message de validation -->
+          <div
+            id="validationMessage"
+            class="hidden mb-4 p-4 rounded-md text-sm"
+          ></div>
         <form id="couponForm" class="space-y-6">
           <div>
             <label
@@ -133,55 +148,162 @@
         return /^[A-Za-z0-9]{5}$/.test(code);
       }
 
+      // Validation des champs du formulaire
+      function validateForm() {
+        const nom = document.getElementById("nom").value.trim();
+        const telephone = document.getElementById("telephone").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const entreprise = document.getElementById("entreprise").value.trim();
+
+        // Validation du nom (au moins 2 caractères)
+        if (nom.length < 2) {
+          showMessage("Le nom doit contenir au moins 2 caractères", true);
+          return false;
+        }
+
+        // Validation du téléphone (format international)
+        const phoneRegex = /^(?:\+|00)\d{1,4}\s*\d{6,14}$|^0\s*\d{8,9}$/;
+        if (!phoneRegex.test(telephone)) {
+          showMessage("Le numéro de téléphone n'est pas valide", true);
+          return false;
+        }
+
+        // Validation de l'email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showMessage("L'adresse email n'est pas valide", true);
+          return false;
+        }
+
+        // Validation de l'entreprise (au moins 2 caractères)
+        if (entreprise.length < 2) {
+          showMessage(
+            "Le nom de l'entreprise doit contenir au moins 2 caractères",
+            true
+          );
+          return false;
+        }
+
+        return true;
+      }
+
       // Gestionnaire de soumission du formulaire
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const couponCode = couponInput.value.trim();
+        const submitButton = form.querySelector('button[type="submit"]');
+        const isActivationMode = !activationFields.classList.contains("hidden");
 
-        // Validation côté client
-        if (!validateCouponFormat(couponCode)) {
-          showMessage(
-            "Le code coupon doit contenir exactement 5 caractères alphanumériques",
-            true
-          );
-          return;
-        }
-
-        try {
-          // Appel à l'API de validation
-          const response = await fetch("/src/validate-coupon", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ code: couponCode }),
-          });
-
-          const data = await response.json();
-
-          if (data.valid) {
-            // Afficher le message de succès
-            showMessage(`Coupon valide pour : ${data.motif}`);
-            // Afficher les champs d'activation
-            activationFields.classList.remove("hidden");
-            // Changer le texte du bouton
-            form.querySelector('button[type="submit"]').textContent =
-              "Activer le Coupon";
-          } else {
-            // Afficher l'erreur
-            showMessage(data.error, true);
-            // Cacher les champs d'activation
-            activationFields.classList.add("hidden");
-            // Réinitialiser le texte du bouton
-            form.querySelector('button[type="submit"]').textContent =
-              "Valider le Coupon";
+        if (isActivationMode) {
+          // Mode activation: valider tous les champs
+          if (!validateForm()) {
+            return;
           }
-        } catch (error) {
-          showMessage(
-            "Une erreur est survenue lors de la validation du coupon",
-            true
-          );
-          console.error("Erreur:", error);
+
+          try {
+            submitButton.disabled = true;
+            submitButton.textContent = "Activation en cours...";
+
+            // Appel à l'API d'activation
+            const response = await fetch("/src/activate-coupon", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                code: couponCode,
+                nom: document.getElementById("nom").value.trim(),
+                telephone: document.getElementById("telephone").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                entreprise: document.getElementById("entreprise").value.trim(),
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              // Hide form view and show success view
+              document.getElementById("formView").classList.add("hidden");
+              const successView = document.getElementById("successView");
+              successView.classList.remove("hidden");
+              
+              // Set personalized messages
+              document.getElementById("successPersonalMessage").textContent = 
+                `Merci ${document.getElementById("nom").value} ! Votre coupon a été activé avec succès.`;
+              document.getElementById("successMotifMessage").textContent = 
+                `Vous recevrez bientôt ${data.motif}.`;
+              
+              // Reset form for next use
+              form.reset();
+              activationFields.classList.add("hidden");
+              submitButton.textContent = "Valider le Coupon";
+            } else {
+              showMessage(
+                data.error || "Une erreur est survenue lors de l'activation",
+                true
+              );
+            }
+          } catch (error) {
+            showMessage(
+              "Une erreur est survenue lors de l'activation du coupon",
+              true
+            );
+            console.error("Erreur:", error);
+          } finally {
+            submitButton.disabled = false;
+          }
+        } else {
+          // Mode validation: vérifier le format du code
+          if (!validateCouponFormat(couponCode)) {
+            showMessage(
+              "Le code coupon doit contenir exactement 5 caractères alphanumériques",
+              true
+            );
+            return;
+          }
+
+          try {
+            submitButton.disabled = true;
+            submitButton.textContent = "Vérification...";
+
+            // Appel à l'API de validation
+            const response = await fetch("/src/validate-coupon", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ code: couponCode }),
+            });
+
+            const data = await response.json();
+
+            if (data.valid) {
+              showMessage(`Coupon valide pour : ${data.motif}`);
+              activationFields.classList.remove("hidden");
+              // Delay changing button text slightly
+              setTimeout(() => {
+                submitButton.textContent = "Activer le Coupon";
+              }, 50);
+              // Store motif for success message
+              const motifInput = document.createElement("input");
+              motifInput.type = "hidden";
+              motifInput.id = "motifValue";
+              motifInput.value = data.motif;
+              form.appendChild(motifInput);
+            } else {
+              showMessage(data.error, true);
+              activationFields.classList.add("hidden");
+              submitButton.textContent = "Valider le Coupon";
+            }
+          } catch (error) {
+            showMessage(
+              "Une erreur est survenue lors de la validation du coupon",
+              true
+            );
+            console.error("Erreur:", error);
+          } finally {
+            submitButton.disabled = false;
+          }
         }
       });
 
@@ -189,9 +311,9 @@
       couponInput.addEventListener("input", () => {
         validationMessage.classList.add("hidden");
         activationFields.classList.add("hidden");
+        document.getElementById("successView").classList.add("hidden");
+        document.getElementById("formView").classList.remove("hidden");
         form.querySelector('button[type="submit"]').textContent =
           "Valider le Coupon";
       });
     </script>
-  </body>
-</html>

@@ -54,6 +54,10 @@ switch ($request) {
         $controller = new Controllers\CouponController();
         $controller->validateCoupon();
         break;
+    case '/activate-coupon':
+        $controller = new Controllers\CouponController();
+        $controller->activateCoupon();
+        break;
     default:
         http_response_code(404);
         echo '404 Not Found';
