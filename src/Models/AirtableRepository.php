@@ -69,7 +69,12 @@ class AirtableRepository
 
             return true;
         } catch (GuzzleException $e) {
-            throw new \RuntimeException("Erreur lors de la mise à jour du coupon", 0, $e);
+            $message = $e->getMessage();
+            if ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse()) {
+                $responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+                $message .= " - " . ($responseBody['error']['message'] ?? 'Unknown error');
+            }
+            throw new \RuntimeException("Erreur lors de la mise à jour du coupon: " . $message, 0, $e);
         }
     }
 }

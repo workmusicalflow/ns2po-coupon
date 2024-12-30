@@ -211,7 +211,7 @@ class CouponController
                 'telephone' => $data['telephone'],
                 'email' => $data['email'],
                 'entreprise' => $data['entreprise'],
-                'dateActivation' => date('Y-m-d\TH:i:s\Z')
+                'dateActivation' => date('d/m/Y')
             ];
 
             $this->airtableRepository->updateCouponActivation($coupon['id'], $updateData);
