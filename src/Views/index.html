@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Système de Coupons Cadeaux</title>
-    <link href="../css/output.css" rel="stylesheet" />
+    <link href="/ns2po-coupon/src/css/output.css" rel="stylesheet" />
   </head>
   <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
@@ -242,8 +242,8 @@
           verifyButton.querySelector('.verify-spinner').classList.remove('hidden');
 
           console.log("Envoi du code coupon:", couponCode);
-          console.log("URL de la requête:", "/validate-coupon");
-          const response = await fetch("/validate-coupon", {
+          console.log("URL de la requête:", "/ns2po-coupon/validate-coupon");
+          const response = await fetch("/ns2po-coupon/validate-coupon", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -360,7 +360,7 @@
               email: document.getElementById("email").value.trim(),
               entreprise: document.getElementById("entreprise").value.trim(),
             });
-            const response = await fetch("/activate-coupon", {
+            const response = await fetch("/ns2po-coupon/activate-coupon", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -423,7 +423,7 @@
 
             // Appel à l'API de validation
             console.log("Validation du code:", couponCode);
-            const response = await fetch("/validate-coupon", {
+            const response = await fetch("/ns2po-coupon/validate-coupon", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

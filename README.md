@@ -32,6 +32,8 @@ Formulaire de saisie comprenant :
 
 - HTML
 - CSS (Tailwind)
+  - Build process : `npm run build` pour générer le CSS minifié
+  - En production : tous les chemins sont préfixés avec /ns2po-coupon
 - JavaScript (Vanilla)
 
 ### Backend
@@ -88,6 +90,30 @@ AIRTABLE_API_KEY=votre_clé_api
 AIRTABLE_BASE_ID=votre_base_id
 AIRTABLE_TABLE_NAME=votre_table
 ```
+
+4. Générer les assets
+
+```bash
+# En développement (watch mode)
+npm run build:css
+
+# En production (minifié)
+npm run build
+```
+
+## Déploiement
+
+### Fichiers à déployer
+
+Après modification des chemins en production ou génération du CSS, transférer via FTP :
+
+1. `src/Views/index.html` - Contient les chemins mis à jour pour la production
+2. `src/css/output.css` - CSS généré et minifié
+
+### Permissions
+
+- Fichiers : 644 (-rw-r--r--)
+- Dossiers : 755 (drwxr-xr-x)
 
 ## Documentation Technique
 

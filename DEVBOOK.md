@@ -89,26 +89,80 @@
       - .env : 644
    ```
 
-   - [x] SSL/TLS configuration
+   - [x] Gestion des chemins en production
+         Configuration des chemins pour la production :
+
+   ```
+   - Utilisation du préfixe /ns2po-coupon pour tous les chemins
+   - Assets CSS : /ns2po-coupon/src/css/output.css
+   - Endpoints API : /ns2po-coupon/validate-coupon, /ns2po-coupon/activate-coupon
+   ```
+
+   - [x] Processus de build et déploiement CSS
+
+   ```
+   1. Générer le CSS minifié : npm run build
+   2. Vérifier la génération de src/css/output.css
+   3. Transférer via FTP :
+      - src/Views/index.html (contient les chemins mis à jour)
+      - src/css/output.css (fichier généré)
+   4. Vérifier les permissions (644) après transfert
+   ```
+
+   - [x] Configuration Apache (.htaccess)
 
    ```apache
-   <VirtualHost *:443>
-       ServerName topdigitalevel.site
-       DocumentRoot /var/www/html/ns2po-coupon
+   # Activation du module de réécriture et configuration
+   RewriteEngine On
+   RewriteBase /ns2po-coupon/
 
-       SSLEngine on
-       SSLCertificateFile /path/to/cert.pem
-       SSLCertificateKeyFile /path/to/key.pem
+   # Configuration basique
+   Options +FollowSymLinks -MultiViews
+   DirectoryIndex src/index.php
 
-       <Directory /var/www/html/ns2po-coupon>
-           Options -Indexes +FollowSymLinks
-           AllowOverride All
-           Require all granted
-       </Directory>
+   # Configuration des logs d'erreur
+   php_flag log_errors on
+   php_value error_log logs/php-error.log
 
-       ErrorLog ${APACHE_LOG_DIR}/ns2po-coupon-error.log
-       CustomLog ${APACHE_LOG_DIR}/ns2po-coupon-access.log combined
-   </VirtualHost>
+   # Headers CORS et sécurité
+   Header set Access-Control-Allow-Origin "*"
+   Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+   Header set Access-Control-Allow-Headers "Content-Type"
+   Header always set X-Content-Type-Options "nosniff"
+   Header always set X-XSS-Protection "1; mode=block"
+   Header always set X-Frame-Options "DENY"
+
+   # Protection des fichiers sensibles
+   <Files ~ "^\.|composer\.|package\.">
+       Order deny,allow
+       Deny from all
+   </Files>
+
+   # Protection des dossiers sensibles
+   RewriteRule ^(vendor|node_modules|tests|logs)/.* - [F]
+
+   # Forcer HTTPS
+   RewriteCond %{HTTPS} !=on
+   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+   # Routage vers index.php
+   RewriteCond %{REQUEST_FILENAME} !-d
+   RewriteCond %{REQUEST_FILENAME} !-f
+   RewriteRule ^ src/index.php [L,QSA]
+
+   # Autoriser l'accès aux assets
+   <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|pdf|map)$">
+       Allow from all
+       Satisfy any
+   </FilesMatch>
+
+   # Configuration des types MIME
+   AddType application/javascript .js
+   AddType text/css .css
+   AddType image/svg+xml .svg
+   AddType application/font-woff2 .woff2
+   AddType application/font-woff .woff
+   AddType application/font-ttf .ttf
    ```
 
    - [x] Backup strategy
@@ -164,8 +218,8 @@
          Endpoints :
 
    ```
-   POST /api/validate-coupon
-   POST /api/activate-coupon
+   POST /ns2po-coupon/validate-coupon
+   POST /ns2po-coupon/activate-coupon
    ```
 
    - [x] User manual
@@ -203,6 +257,8 @@ Frontend (HTML/CSS/JS) ⟷ Controller ⟷ Model (Airtable API)
 
 - HTML5
 - CSS (Tailwind)
+  - Build process: npm run build pour générer output.css minifié
+  - Chemins en production: préfixés avec /ns2po-coupon
 - Vanilla JavaScript
 
 ### Backend
@@ -353,6 +409,13 @@ La validation des coupons se fait en plusieurs étapes:
 - UI/UX validation
 
 ## Changelog
+
+### [1.0.1] - Production Path Fixes
+
+- Corrigé les chemins CSS et API pour la production avec le préfixe /ns2po-coupon
+- Mis à jour la documentation de déploiement pour la génération CSS
+- Ajouté des instructions détaillées pour le transfert FTP des fichiers modifiés
+- Clarifié le processus de build et déploiement des assets
 
 ### [1.0.0] - Phase 3 Complete
 
