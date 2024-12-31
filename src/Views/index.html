@@ -57,7 +57,7 @@
               id="couponId"
               name="couponId"
               required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
 
@@ -71,7 +71,7 @@
                 id="nom"
                 name="nom"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div>
@@ -85,7 +85,7 @@
                 id="telephone"
                 name="telephone"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div>
@@ -97,7 +97,7 @@
                 id="email"
                 name="email"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
             <div>
@@ -111,7 +111,7 @@
                 id="entreprise"
                 name="entreprise"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           </div>
@@ -122,9 +122,15 @@
               <button
                 type="button"
                 id="verifyButton"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 relative"
               >
-                Vérifier la validité
+                <span class="inline-flex items-center">
+                  <span class="verify-text">Vérifier la validité</span>
+                  <svg class="verify-spinner hidden animate-spin ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </span>
               </button>
               <button
                 type="button"
@@ -232,7 +238,8 @@
         try {
           // Désactiver le bouton pendant la vérification
           verifyButton.disabled = true;
-          verifyButton.textContent = "Vérification...";
+          verifyButton.querySelector('.verify-text').textContent = "Vérification...";
+          verifyButton.querySelector('.verify-spinner').classList.remove('hidden');
 
           console.log("Envoi du code coupon:", couponCode);
           console.log("URL de la requête:", "/validate-coupon");
@@ -283,7 +290,8 @@
           console.error("Stack trace:", error.stack);
         } finally {
           verifyButton.disabled = false;
-          verifyButton.textContent = "Vérifier la validité";
+          verifyButton.querySelector('.verify-text').textContent = "Vérifier la validité";
+          verifyButton.querySelector('.verify-spinner').classList.add('hidden');
         }
       }
 
