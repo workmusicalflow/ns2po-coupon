@@ -32,7 +32,10 @@ class CouponController
         }
 
         // Récupérer et décoder le JSON du body
-        $jsonData = json_decode(file_get_contents('php://input'), true);
+        $rawInput = file_get_contents('php://input');
+        $this->logger->debug("Données brutes reçues", ['raw' => $rawInput]);
+        $jsonData = json_decode($rawInput, true);
+        $this->logger->debug("Données JSON décodées", ['data' => $jsonData]);
 
         // Vérifier que le code est présent
         if (!isset($jsonData['code']) || empty($jsonData['code'])) {
@@ -45,14 +48,10 @@ class CouponController
         try {
             $this->logger->info("Tentative de validation du coupon", ['code' => $code]);
 
-            // Valider le format du code
+            // Valider le coupon via le service
             $validationResult = $this->couponService->validateCoupon($code);
 
             if (!$validationResult['isValid']) {
-                $this->logger->warning("Format de coupon invalide", [
-                    'code' => $code,
-                    'error' => $validationResult['error']
-                ]);
                 $this->jsonResponse([
                     'valid' => false,
                     'error' => $validationResult['error']
@@ -60,41 +59,9 @@ class CouponController
                 return;
             }
 
-            // Vérifier dans Airtable
-            $coupon = $this->airtableRepository->findCouponByLastFiveChars($code);
-            $this->logger->debug("Résultat de la recherche Airtable", ['found' => !empty($coupon)]);
-
-            if (!$coupon) {
-                $this->logger->warning("Coupon non trouvé", ['code' => $code]);
-                $this->jsonResponse([
-                    'valid' => false,
-                    'error' => 'Code coupon invalide ou inexistant'
-                ], 404);
-                return;
-            }
-
-            // Vérifier si le coupon n'est pas déjà utilisé
-            if (isset($coupon['fields']['email']) && !empty($coupon['fields']['email'])) {
-                $this->logger->warning("Tentative d'utilisation d'un coupon déjà utilisé", [
-                    'code' => $code,
-                    'email' => $coupon['fields']['email']
-                ]);
-                $this->jsonResponse([
-                    'valid' => false,
-                    'error' => 'Ce code coupon a déjà été utilisé'
-                ], 400);
-                return;
-            }
-
-            $this->logger->info("Validation du coupon réussie", [
-                'code' => $code,
-                'motif' => $coupon['fields']['motif'] ?? 'Non spécifié'
-            ]);
-
-            // Coupon valide et disponible
             $this->jsonResponse([
                 'valid' => true,
-                'motif' => $coupon['fields']['motif'] ?? 'Non spécifié'
+                'motif' => $validationResult['motif']
             ]);
         } catch (\InvalidArgumentException $e) {
             $this->logger->warning("Erreur de validation", [
@@ -149,13 +116,9 @@ class CouponController
         try {
             $this->logger->info("Tentative d'activation du coupon", ['code' => $data['code']]);
 
-            // Valider le format du code
+            // Valider le coupon via le service
             $validationResult = $this->couponService->validateCoupon($data['code']);
             if (!$validationResult['isValid']) {
-                $this->logger->warning("Format de coupon invalide lors de l'activation", [
-                    'code' => $data['code'],
-                    'error' => $validationResult['error']
-                ]);
                 $this->jsonResponse([
                     'success' => false,
                     'error' => $validationResult['error']
@@ -163,30 +126,8 @@ class CouponController
                 return;
             }
 
-            // Vérifier dans Airtable
+            // Récupérer le coupon validé
             $coupon = $this->airtableRepository->findCouponByLastFiveChars($data['code']);
-
-            if (!$coupon) {
-                $this->logger->warning("Coupon non trouvé lors de l'activation", ['code' => $data['code']]);
-                $this->jsonResponse([
-                    'success' => false,
-                    'error' => 'Code coupon invalide ou inexistant'
-                ], 404);
-                return;
-            }
-
-            // Vérifier si le coupon n'est pas déjà utilisé
-            if (isset($coupon['fields']['email']) && !empty($coupon['fields']['email'])) {
-                $this->logger->warning("Tentative d'activation d'un coupon déjà utilisé", [
-                    'code' => $data['code'],
-                    'email' => $coupon['fields']['email']
-                ]);
-                $this->jsonResponse([
-                    'success' => false,
-                    'error' => 'Ce code coupon a déjà été utilisé'
-                ], 400);
-                return;
-            }
 
             // Valider le format des données
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {

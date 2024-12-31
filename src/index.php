@@ -1,5 +1,8 @@
 <?php
 
+// Configuration du fuseau horaire pour correspondre à l'heure de la Côte d'Ivoire
+ini_set('date.timezone', 'GMT');
+
 use Dotenv\Dotenv;
 use Middleware\ErrorHandler;
 use Utils\Logger;

@@ -52,11 +52,17 @@ class CouponServiceTest extends TestCase
     #[Test]
     public function testCompleteCouponValidation(): void
     {
-        // Test du processus complet de validation
-        $validationResult = $this->couponService->validateCoupon('HTvLB');
+        // Test avec le code exact (sensible à la casse)
+        $validationResult = $this->couponService->validateCoupon('BCCA');
         $this->assertTrue($validationResult['isValid']);
         $this->assertEquals('100 cartes de visite', $validationResult['motif']);
 
+        // Test avec une casse différente (doit échouer)
+        $invalidCaseResult = $this->couponService->validateCoupon('bcca');
+        $this->assertFalse($invalidCaseResult['isValid']);
+        $this->assertArrayHasKey('error', $invalidCaseResult);
+
+        // Test avec un code invalide
         $invalidResult = $this->couponService->validateCoupon('INVALID123');
         $this->assertFalse($invalidResult['isValid']);
         $this->assertArrayHasKey('error', $invalidResult);

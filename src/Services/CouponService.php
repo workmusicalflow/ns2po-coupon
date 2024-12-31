@@ -2,8 +2,20 @@
 
 namespace Services;
 
+use Models\AirtableRepository;
+use Utils\Logger;
+
 class CouponService
 {
+    private Logger $logger;
+    private AirtableRepository $airtableRepository;
+
+    public function __construct(AirtableRepository $airtableRepository = null)
+    {
+        $this->logger = new Logger();
+        $this->airtableRepository = $airtableRepository ?? new AirtableRepository(new \GuzzleHttp\Client());
+    }
+
     /**
      * Valide le format des 5 derniers caractères d'un code coupon
      * @param string $shortCode Les 5 derniers caractères du code coupon
@@ -26,27 +38,31 @@ class CouponService
     }
 
     /**
-     * Vérifie si un coupon existe dans Airtable en utilisant les 5 derniers caractères
+     * Vérifie si un coupon existe et est disponible dans Airtable
      * @param string $shortCode Les 5 derniers caractères du code coupon
-     * @return bool True si le coupon existe
+     * @return array|null Les données du coupon ou null si non trouvé
      */
-    public function checkCouponExists(string $shortCode): bool
+    private function findAndValidateCoupon(string $shortCode): ?array
     {
-        // Dans la vraie implémentation, on cherchera dans Airtable tous les codes qui se terminent par ces 5 caractères
-        // SELECT * FROM Coupons WHERE SUBSTR(recordId, -5) = $shortCode
-        return $shortCode === 'HTvLB';
-    }
+        $this->logger->debug("Recherche du coupon dans Airtable", ['shortCode' => $shortCode]);
 
-    /**
-     * Vérifie si un coupon est disponible en utilisant les 5 derniers caractères
-     * @param string $shortCode Les 5 derniers caractères du code coupon
-     * @return bool True si le coupon est disponible
-     */
-    public function isCouponAvailable(string $shortCode): bool
-    {
-        // Dans la vraie implémentation, on vérifiera dans Airtable si le coupon correspondant est disponible
-        // SELECT * FROM Coupons WHERE SUBSTR(recordId, -5) = $shortCode AND email IS NULL
-        return $shortCode === 'HTvLB';
+        $coupon = $this->airtableRepository->findCouponByLastFiveChars($shortCode);
+
+        if (!$coupon) {
+            $this->logger->debug("Coupon non trouvé dans Airtable", ['shortCode' => $shortCode]);
+            return null;
+        }
+
+        // Vérifier si le coupon a déjà été utilisé
+        if (!empty($coupon['fields']['email'])) {
+            $this->logger->debug("Coupon déjà utilisé", [
+                'shortCode' => $shortCode,
+                'email' => $coupon['fields']['email']
+            ]);
+            return null;
+        }
+
+        return $coupon;
     }
 
     /**
@@ -57,30 +73,34 @@ class CouponService
     public function validateCoupon(string $shortCode): array
     {
         try {
+            $this->logger->info("Tentative de validation du coupon", ['code' => $shortCode]);
+
             // Validation du format
             $this->validateCouponFormat($shortCode);
 
-            // Vérification de l'existence
-            if (!$this->checkCouponExists($shortCode)) {
+            // Recherche et validation dans Airtable
+            $coupon = $this->findAndValidateCoupon($shortCode);
+
+            if (!$coupon) {
+                $error = "Code coupon invalide ou inexistant";
+                $this->logger->warning("Format de coupon invalide", [
+                    'code' => $shortCode,
+                    'error' => $error
+                ]);
                 return [
                     'isValid' => false,
-                    'error' => 'Code coupon invalide ou inexistant'
+                    'error' => $error
                 ];
             }
 
-            // Vérification de la disponibilité
-            if (!$this->isCouponAvailable($shortCode)) {
-                return [
-                    'isValid' => false,
-                    'error' => 'Ce code coupon a déjà été utilisé'
-                ];
-            }
+            $this->logger->info("Coupon validé avec succès", [
+                'code' => $shortCode,
+                'motif' => $coupon['fields']['motif'] ?? 'Non spécifié'
+            ]);
 
-            // Pour le test, simulation d'un coupon valide
-            // Dans la vraie implémentation, on récupérera le motif depuis Airtable
             return [
                 'isValid' => true,
-                'motif' => '100 cartes de visite'
+                'motif' => $coupon['fields']['motif'] ?? 'Non spécifié'
             ];
         } catch (\InvalidArgumentException $e) {
             return [

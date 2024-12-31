@@ -28,7 +28,14 @@
           <h2 class="text-2xl font-bold text-gray-800 mb-2">Activation Réussie !</h2>
           <p id="successPersonalMessage" class="text-gray-600 mb-4"></p>
           <p id="successMotifMessage" class="text-gray-600 mb-6 font-semibold"></p>
-          <p class="text-sm text-gray-500">Un email de confirmation vous sera envoyé prochainement avec les détails de votre coupon.</p>
+          <p class="text-sm text-gray-500 mb-8">Un email de confirmation vous sera envoyé prochainement avec les détails de votre coupon.</p>
+          <button
+            type="button"
+            id="returnHomeButton"
+            class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+          >
+            Retour à l'accueil
+          </button>
         </div>
 
         <!-- Form View -->
@@ -227,7 +234,9 @@
           verifyButton.disabled = true;
           verifyButton.textContent = "Vérification...";
 
-          const response = await fetch("/src/validate-coupon", {
+          console.log("Envoi du code coupon:", couponCode);
+          console.log("URL de la requête:", "/validate-coupon");
+          const response = await fetch("/validate-coupon", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -235,7 +244,10 @@
             body: JSON.stringify({ code: couponCode }),
           });
 
-          const data = await response.json();
+          const responseText = await response.text();
+          console.log("Réponse brute:", responseText);
+          const data = JSON.parse(responseText);
+          console.log("Réponse parsée:", data);
 
           if (data.valid) {
             // Afficher le message de succès
@@ -267,7 +279,8 @@
           }
         } catch (error) {
           showMessage("Une erreur est survenue lors de la vérification du coupon", true);
-          console.error("Erreur:", error);
+          console.error("Erreur complète:", error);
+          console.error("Stack trace:", error.stack);
         } finally {
           verifyButton.disabled = false;
           verifyButton.textContent = "Vérifier la validité";
@@ -332,7 +345,14 @@
             submitButton.textContent = "Activation en cours...";
 
             // Appel à l'API d'activation
-            const response = await fetch("/src/activate-coupon", {
+            console.log("Envoi des données d'activation:", {
+              code: couponCode,
+              nom: document.getElementById("nom").value.trim(),
+              telephone: document.getElementById("telephone").value.trim(),
+              email: document.getElementById("email").value.trim(),
+              entreprise: document.getElementById("entreprise").value.trim(),
+            });
+            const response = await fetch("/activate-coupon", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -394,7 +414,8 @@
             submitButton.textContent = "Vérification...";
 
             // Appel à l'API de validation
-            const response = await fetch("/src/validate-coupon", {
+            console.log("Validation du code:", couponCode);
+            const response = await fetch("/validate-coupon", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -442,5 +463,32 @@
         document.getElementById("useButton").classList.add("hidden");
         document.getElementById("submitButton").classList.add("hidden");
         document.getElementById("resetButton").classList.add("hidden");
+      });
+
+      // Gestionnaire du bouton retour à l'accueil
+      document.getElementById("returnHomeButton").addEventListener("click", () => {
+        // Réinitialiser le formulaire
+        form.reset();
+        
+        // Cacher la vue de succès et afficher le formulaire
+        document.getElementById("successView").classList.add("hidden");
+        document.getElementById("formView").classList.remove("hidden");
+        
+        // Réinitialiser tous les champs et états
+        validationMessage.classList.add("hidden");
+        activationFields.classList.add("hidden");
+        document.getElementById("useButton").classList.add("hidden");
+        document.getElementById("submitButton").classList.add("hidden");
+        document.getElementById("resetButton").classList.add("hidden");
+        
+        // Réactiver le champ de saisie et le bouton de vérification
+        couponInput.disabled = false;
+        couponInput.classList.remove("bg-gray-100");
+        const verifyButton = document.getElementById("verifyButton");
+        verifyButton.disabled = false;
+        verifyButton.classList.remove("opacity-50", "cursor-not-allowed", "bg-gray-400");
+        
+        // Focus sur le champ de saisie
+        couponInput.focus();
       });
     </script>
