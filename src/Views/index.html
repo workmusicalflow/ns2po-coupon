@@ -140,8 +140,16 @@
                           hover:file:bg-blue-100
                           focus:outline-none"
                   />
-                  <div id="rectoPreview" class="hidden">
+                  <div id="rectoPreview" class="hidden relative">
                     <img src="" alt="Aperçu recto" class="h-10 w-10 object-cover rounded">
+                    <button type="button" 
+                            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                            onclick="deleteFile('carteVisiteRecto', 'rectoPreview')"
+                            aria-label="Supprimer le fichier recto">
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 <p class="mt-1 text-xs text-gray-500">Formats acceptés : JPG, JPEG, PNG, PDF. Max 10 Mo</p>
@@ -166,8 +174,16 @@
                           hover:file:bg-blue-100
                           focus:outline-none"
                   />
-                  <div id="versoPreview" class="hidden">
+                  <div id="versoPreview" class="hidden relative">
                     <img src="" alt="Aperçu verso" class="h-10 w-10 object-cover rounded">
+                    <button type="button" 
+                            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                            onclick="deleteFile('carteVisiteVerso', 'versoPreview')"
+                            aria-label="Supprimer le fichier verso">
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 <p class="mt-1 text-xs text-gray-500">Formats acceptés : JPG, JPEG, PNG, PDF. Max 10 Mo</p>
@@ -235,6 +251,24 @@
         if (preview.querySelector("img")) {
           preview.querySelector("img").src = "";
         }
+      }
+
+      // Fonction pour supprimer un fichier
+      function deleteFile(inputId, previewId) {
+        // Réinitialiser l'input file
+        const input = document.getElementById(inputId);
+        input.value = '';
+        
+        // Nettoyer la prévisualisation
+        cleanFilePreview(previewId);
+        
+        // Afficher un message de confirmation
+        showMessage('Le fichier a été supprimé avec succès', false);
+        
+        // Masquer le message après 3 secondes
+        setTimeout(() => {
+          validationMessage.classList.add('hidden');
+        }, 3000);
       }
 
       // Fonction pour afficher les messages
@@ -616,7 +650,22 @@
           // Pour les PDF, afficher une icône
           preview.classList.remove('hidden');
           const img = preview.querySelector('img');
-          preview.innerHTML = '<div class="w-10 h-10 bg-red-100 rounded flex items-center justify-center"><svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></div>';
+          preview.innerHTML = `
+            <div class="relative">
+              <div class="w-10 h-10 bg-red-100 rounded flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <button type="button" 
+                      class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                      onclick="deleteFile('${input.id}', '${preview.id}')"
+                      aria-label="Supprimer le fichier">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>`;
         }
       }
 
