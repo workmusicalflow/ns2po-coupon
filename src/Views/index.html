@@ -9,10 +9,12 @@
   <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
       <header class="text-center mb-12">
-        <h1 class="text-3xl font-bold text-gray-800">
+        <img src="/ns2po-coupon/src/Views/assets/images/Banniere-coupon.jpg" alt="Bannière promotionnelle" 
+             class="w-full aspect-[420/224] object-cover max-w-3xl mx-auto mb-6 rounded-lg">  
+        <h1 class="text-xl sm:text-3xl font-bold text-gray-800 whitespace-nowrap">
           Validation de Coupon Cadeau
         </h1>
-        <p class="text-gray-600 mt-2">
+        <p class="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 whitespace-nowrap">
           Vérifiez et activez votre coupon pour 100 cartes de visite
         </p>
       </header>
@@ -114,6 +116,63 @@
                 class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm transition-colors duration-200 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
+
+            <!-- Upload Carte de Visite -->
+            <div class="space-y-4">
+              <p class="text-sm font-medium text-gray-700">Fichier carte de Visite (Optionnel)</p>
+              
+              <!-- Upload Recto -->
+              <div>
+                <label for="carteVisiteRecto" class="block text-sm font-medium text-gray-700">
+                  Recto
+                </label>
+                <div class="mt-1 flex items-center space-x-4">
+                  <input
+                    type="file"
+                    id="carteVisiteRecto"
+                    name="carteVisiteRecto"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    class="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-md file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-blue-50 file:text-blue-700
+                          hover:file:bg-blue-100
+                          focus:outline-none"
+                  />
+                  <div id="rectoPreview" class="hidden">
+                    <img src="" alt="Aperçu recto" class="h-10 w-10 object-cover rounded">
+                  </div>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Formats acceptés : JPG, JPEG, PNG, PDF. Max 10 Mo</p>
+              </div>
+
+              <!-- Upload Verso -->
+              <div>
+                <label for="carteVisiteVerso" class="block text-sm font-medium text-gray-700">
+                  Verso
+                </label>
+                <div class="mt-1 flex items-center space-x-4">
+                  <input
+                    type="file"
+                    id="carteVisiteVerso"
+                    name="carteVisiteVerso"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    class="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-md file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-blue-50 file:text-blue-700
+                          hover:file:bg-blue-100
+                          focus:outline-none"
+                  />
+                  <div id="versoPreview" class="hidden">
+                    <img src="" alt="Aperçu verso" class="h-10 w-10 object-cover rounded">
+                  </div>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Formats acceptés : JPG, JPEG, PNG, PDF. Max 10 Mo</p>
+              </div>
+            </div>
           </div>
 
           <div class="flex flex-col items-center space-y-4">
@@ -168,6 +227,15 @@
       const validationMessage = document.getElementById("validationMessage");
       const activationFields = document.getElementById("activationFields");
       const couponInput = document.getElementById("couponId");
+      
+      // Fonction pour nettoyer les aperçus de fichiers
+      function cleanFilePreview(previewId) {
+        const preview = document.getElementById(previewId);
+        preview.classList.add("hidden");
+        if (preview.querySelector("img")) {
+          preview.querySelector("img").src = "";
+        }
+      }
 
       // Fonction pour afficher les messages
       function showMessage(message, isError = false) {
@@ -390,6 +458,9 @@
               
               // Reset form for next use
               form.reset();
+              // Nettoyer les aperçus de fichiers
+              cleanFilePreview("rectoPreview");
+              cleanFilePreview("versoPreview");
               activationFields.classList.add("hidden");
               submitButton.textContent = "Valider le Coupon";
             } else {
@@ -477,6 +548,10 @@
       document.getElementById("returnHomeButton").addEventListener("click", () => {
         // Réinitialiser le formulaire
         form.reset();
+
+        // Nettoyer les aperçus de fichiers
+        cleanFilePreview("rectoPreview");
+        cleanFilePreview("versoPreview");
         
         // Cacher la vue de succès et afficher le formulaire
         document.getElementById("successView").classList.add("hidden");
@@ -498,5 +573,131 @@
         
         // Focus sur le champ de saisie
         couponInput.focus();
+      });
+
+      // Gestion des uploads de fichiers
+      function handleFileUpload(input, previewId, maxSize = 10 * 1024 * 1024) {
+        const preview = document.getElementById(previewId);
+        const file = input.files[0];
+
+        // Réinitialiser le champ si aucun fichier n'est sélectionné
+        if (!file) {
+          preview.classList.add('hidden');
+          return;
+        }
+
+        // Vérifier la taille du fichier
+        if (file.size > maxSize) {
+          showMessage('Le fichier est trop volumineux. La taille maximale est de 10 Mo.', true);
+          input.value = '';
+          preview.classList.add('hidden');
+          return;
+        }
+
+        // Vérifier le type de fichier
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+          showMessage('Format de fichier non supporté. Utilisez JPG, JPEG, PNG ou PDF.', true);
+          input.value = '';
+          preview.classList.add('hidden');
+          return;
+        }
+
+        // Afficher la prévisualisation pour les images
+        if (file.type !== 'application/pdf') {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = preview.querySelector('img');
+            img.src = e.target.result;
+            preview.classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Pour les PDF, afficher une icône
+          preview.classList.remove('hidden');
+          const img = preview.querySelector('img');
+          preview.innerHTML = '<div class="w-10 h-10 bg-red-100 rounded flex items-center justify-center"><svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg></div>';
+        }
+      }
+
+      // Écouteurs d'événements pour les champs de fichiers
+      document.getElementById('carteVisiteRecto').addEventListener('change', function() {
+        handleFileUpload(this, 'rectoPreview');
+      });
+
+      document.getElementById('carteVisiteVerso').addEventListener('change', function() {
+        handleFileUpload(this, 'versoPreview');
+      });
+
+      // Modification du gestionnaire de soumission du formulaire pour inclure les fichiers
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const couponCode = couponInput.value.trim();
+        const submitButton = form.querySelector('button[type="submit"]');
+        const isActivationMode = !activationFields.classList.contains("hidden");
+
+        if (isActivationMode) {
+          if (!validateForm()) {
+            return;
+          }
+
+          try {
+            submitButton.disabled = true;
+            submitButton.textContent = "Activation en cours...";
+
+            // Créer un FormData pour envoyer les fichiers
+            const formData = new FormData();
+            formData.append('code', couponCode);
+            formData.append('nom', document.getElementById("nom").value.trim());
+            formData.append('telephone', document.getElementById("telephone").value.trim());
+            formData.append('email', document.getElementById("email").value.trim());
+            formData.append('entreprise', document.getElementById("entreprise").value.trim());
+
+            // Ajouter les fichiers s'ils sont présents
+            const rectoFile = document.getElementById('carteVisiteRecto').files[0];
+            const versoFile = document.getElementById('carteVisiteVerso').files[0];
+            if (rectoFile) formData.append('carteVisiteRecto', rectoFile);
+            if (versoFile) formData.append('carteVisiteVerso', versoFile);
+
+            const response = await fetch("/ns2po-coupon/activate-coupon", {
+              method: "POST",
+              body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              document.getElementById("formView").classList.add("hidden");
+              const successView = document.getElementById("successView");
+              successView.classList.remove("hidden");
+              
+              document.getElementById("successPersonalMessage").textContent = 
+                `Merci ${document.getElementById("nom").value} ! Votre coupon a été activé avec succès.`;
+              document.getElementById("successMotifMessage").textContent = 
+                `Vous recevrez bientôt ${data.motif}.`;
+              
+              form.reset();
+              // Nettoyer les aperçus de fichiers
+              cleanFilePreview("rectoPreview");
+              cleanFilePreview("versoPreview");
+              activationFields.classList.add("hidden");
+              submitButton.textContent = "Valider le Coupon";
+            } else {
+              showMessage(data.error || "Une erreur est survenue lors de l'activation", true);
+            }
+          } catch (error) {
+            showMessage("Une erreur est survenue lors de l'activation du coupon", true);
+            console.error("Erreur:", error);
+          } finally {
+            submitButton.disabled = false;
+          }
+        } else {
+          // Mode validation: vérifier le format du code
+          if (!validateCouponFormat(couponCode)) {
+            showMessage("Le code coupon doit contenir exactement 5 caractères alphanumériques", true);
+            return;
+          }
+          verifyCoupon(couponCode);
+        }
       });
     </script>

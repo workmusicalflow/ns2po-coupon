@@ -7,6 +7,7 @@ use Models\AirtableRepository;
 use Utils\Logger;
 use GuzzleHttp\Client;
 use Services\EmailService;
+use Services\FileUploadService;
 
 class CouponController
 {
@@ -14,6 +15,7 @@ class CouponController
     private AirtableRepository $airtableRepository;
     private Logger $logger;
     private EmailService $emailService;
+    private FileUploadService $fileUploadService;
 
     public function __construct()
     {
@@ -21,6 +23,7 @@ class CouponController
         $this->airtableRepository = new AirtableRepository(new Client());
         $this->logger = new Logger();
         $this->emailService = new EmailService();
+        $this->fileUploadService = new FileUploadService();
     }
 
     public function validateCoupon(): void
@@ -92,8 +95,9 @@ class CouponController
             return;
         }
 
-        // Récupérer et décoder le JSON du body
-        $jsonData = json_decode(file_get_contents('php://input'), true);
+        // Récupérer les données POST et les fichiers
+        $jsonData = $_POST;
+        $files = $_FILES;
 
         // Valider les données requises
         $requiredFields = ['code', 'nom', 'telephone', 'email', 'entreprise'];
@@ -146,6 +150,37 @@ class CouponController
                 return;
             }
 
+            // Gérer l'upload des fichiers
+            $uploadResults = [];
+
+            if (isset($files['carteVisiteRecto']) && !empty($files['carteVisiteRecto']['tmp_name'])) {
+                $rectoResult = $this->fileUploadService->handleUpload($files['carteVisiteRecto'], 'recto_' . $data['code']);
+                if (!$rectoResult['success']) {
+                    $this->jsonResponse([
+                        'success' => false,
+                        'error' => 'Erreur lors de l\'upload du recto : ' . $rectoResult['error']
+                    ], 400);
+                    return;
+                }
+                $uploadResults['recto'] = $rectoResult['path'];
+            }
+
+            if (isset($files['carteVisiteVerso']) && !empty($files['carteVisiteVerso']['tmp_name'])) {
+                $versoResult = $this->fileUploadService->handleUpload($files['carteVisiteVerso'], 'verso_' . $data['code']);
+                if (!$versoResult['success']) {
+                    // Si le recto a été uploadé, le supprimer
+                    if (isset($uploadResults['recto'])) {
+                        $this->fileUploadService->deleteFile($uploadResults['recto']);
+                    }
+                    $this->jsonResponse([
+                        'success' => false,
+                        'error' => 'Erreur lors de l\'upload du verso : ' . $versoResult['error']
+                    ], 400);
+                    return;
+                }
+                $uploadResults['verso'] = $versoResult['path'];
+            }
+
             // Mettre à jour le coupon dans Airtable
             $updateData = [
                 'nom' => $data['nom'],
@@ -154,6 +189,14 @@ class CouponController
                 'entreprise' => $data['entreprise'],
                 'dateActivation' => date('Y-m-d')
             ];
+
+            // Ajouter les chemins des fichiers s'ils existent
+            if (!empty($uploadResults['recto'])) {
+                $updateData['carteVisiteRecto'] = $uploadResults['recto'];
+            }
+            if (!empty($uploadResults['verso'])) {
+                $updateData['carteVisiteVerso'] = $uploadResults['verso'];
+            }
 
             $this->airtableRepository->updateCouponActivation($coupon['id'], $updateData);
 
